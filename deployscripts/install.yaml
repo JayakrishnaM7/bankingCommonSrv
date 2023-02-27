@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  become: yes
+  tasks:
+
+    - name: Add fundtransfer chart repository.
+      community.kubernetes.helm_repository:
+        name: fundtransfer
+        repo_url: "https://rameshpoomalai.github.io/helmrepo/"
+
+    - name: Install fundtransfer with Helm.
+      community.kubernetes.helm:
+        name: fundtransfer
+        chart_ref: fundtransfer/fundtransfer
+        release_namespace: garage-assets
+        values:
+          service:
+            type: NodePort
+      register: helm_deployment_output
+    - name: Ensure K8s module dependencies are installed.
+      pip:
+        name: openshift
+        state: present
+    - name: Print the Helm deployment output.
+      debug:
+        var: helm_deployment_output.stdout_lines
+

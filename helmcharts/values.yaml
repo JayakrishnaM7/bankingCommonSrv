@@ -1,0 +1,43 @@
+# Default values for lets-chat.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 2
+progressDeadlineSeconds: 300
+spec:
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 50%
+image:
+  repository: rameshpoomalai
+  tag: latest
+  pullPolicy: IfNotPresent
+service:
+  name: bankingcommonsrv
+  tier: frontend
+  type: NodePort
+  protocol: TCP
+  internalPort: 9080
+  externalPort: 9080
+  nodeport: 30080
+ingress:
+  enabled: false
+resources:
+  limits:
+    memory: 512Mi
+  requests:
+    memory: 128Mi
+secret:
+  username: QTAwMDMwODk3NDQ1MTEyMjMyNjE0MTYhRFowTEk4V2F0SUNLaFI3bVl3M2NhUW14OElEMUhmZDlOdzAwankzY3FjejJjNXBDV3I2UjlSWWJsc3VqNG9xUFMrNzRRdlFXQ29EOHZ2OGhHVDc3QUFCRWhiTT0=
+  password: QTAwMDMwODk3NDQ1MTEyMjMyNjE0MTYhRFowTEk4V2F0SUNLaFI3bVl3M2NhUW14OElEMUhmZDlOdzAwankzY3FjejJjNXBDV3I2UjlSWWJsc3VqNG9xUFMrNzRRdlFXQ29EOHZ2OGhHVDc3QUFCRWhiTT0=   
+bankingcommonsrv_secret:
+  password: a2Fma2FsYWRtaW4=
+  username: a2Fma2FsYWRtaW4=
+bankingcommonsrv_otp_secret:
+  password: aHR0cDovL290cC1nZW5lcmF0b3ItZ2FyYWdlLWFzc2V0cy5mc2Nsb3VkLWNsdXN0ZXIxLTNjNjQ1ZmQ3YjQ5ZjNkOGIwMWM1NmYxOWM5NTBhNWMzLTAwMDAuY2hlMDEuY29udGFpbmVycy5hcHBkb21haW4uY2xvdWQ=
+  username: aHR0cDovL290cC1nZW5lcmF0b3ItZ2FyYWdlLWFzc2V0cy5mc2Nsb3VkLWNsdXN0ZXIxLTNjNjQ1ZmQ3YjQ5ZjNkOGIwMWM1NmYxOWM5NTBhNWMzLTAwMDAuY2hlMDEuY29udGFpbmVycy5hcHBkb21haW4uY2xvdWQ=
+bankingcommonsrv_tmv_secret:
+  password: QTAwMDMwODk3NDQ1MTEyMjMyNjE0MTYhRFowTEk4V2F0SUNLaFI3bVl3M2NhUW14OElEMUhmZDlOdzAwankzY3FjejJjNXBDV3I2UjlSWWJsc3VqNG9xUFMrNzRRdlFXQ29EOHZ2OGhHVDc3QUFCRWhiTT0=
+  username: aHR0cHM6Ly9jb3JlLWFwaS50bXByYWN0aWNldmF1bHQtZnJhMDMtbS03OTQ2YjcyOTliY2EzNzU3YmM0YzcwYzZmMTQ0YzQ4Ni0wMDAwLmV1LWRlLmNvbnRhaW5lcnMuYXBwZG9tYWluLmNsb3Vk
+   
+

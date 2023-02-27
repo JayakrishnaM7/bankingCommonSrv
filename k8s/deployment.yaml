@@ -1,0 +1,125 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: bankingcommonsrv
+  labels:
+    app: bankingcommonsrv
+spec:
+  replicas: 1
+  selector:
+    name: bankingcommonsrv
+    app: bankingcommonsrv
+    servicetype: backend
+    version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        name: bankingcommonsrv
+        app: bankingcommonsrv
+        servicetype: backend
+        version: v1
+      
+    spec:
+      containers:
+        - name: bankingcommonsrv
+          image: image-registry.openshift-image-registry.svc:5000/garage-assets/bankingcommonsrv
+          imagePullPolicy: Always
+          readinessProbe: 
+            tcpSocket:
+              port: 9080
+            initialDelaySeconds: 90  
+            timeoutSeconds: 3
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          ports:
+            - containerPort: 9080
+          env:            
+            - name: tmvauthtoken
+              valueFrom:
+                secretKeyRef:
+                  name: bankingcommonsrv-tmv-secret
+                  key: password   
+            - name: tmvurl
+              valueFrom:
+                secretKeyRef:
+                  name: bankingcommonsrv-tmv-secret
+                  key: username 
+            - name: otpurl
+              valueFrom:
+                secretKeyRef:
+                  name: bankingcommonsrv-otp-secret
+                  key: username  
+
+                                                   
+              
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 4m
+              memory: 128Mi                
+---
+apiVersion: autoscaling/v2beta2 
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bankingcommonsrv-autoscale
+  labels:
+    app: bankingcommonsrv
+spec:
+  scaleTargetRef:
+    apiVersion: v1 
+    kind: DeploymentConfig 
+    name: bankingcommonsrv
+  minReplicas: 1 
+  maxReplicas: 2 
+  metrics: 
+  - type: Resource
+    resource:
+      name: cpu 
+      target:
+        type: AverageValue 
+        averageValue: 6m       
+  # - type: Resource
+  #   resource:
+  #     name: memory 
+  #     target:
+  #       type: AverageValue 
+  #       averageValue: 200Mi   
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankingcommonsrv
+  labels:
+    app: bankingcommonsrv
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9080
+    name: http-9080
+  selector:
+    app: bankingcommonsrv 
+---
+apiVersion: v1
+data:
+  password: admin
+  username: admin
+kind: Secret
+metadata:
+  name: bankingcommonsrv-otp-secret
+type: kubernetes.io/basic-auth
+---
+
+apiVersion: v1
+data:
+  password: admin
+  username: admin
+kind: Secret
+metadata:
+  name: bankingcommonsrv-tmv-secret
+type: kubernetes.io/basic-auth
+---                 

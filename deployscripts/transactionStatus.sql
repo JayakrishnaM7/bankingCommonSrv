@@ -1,0 +1,25 @@
+--
+-- The CREATE TABLE statement defines a table. In MPP, you should define a proper distribution key
+-- The distribution key helps performance by spreading table data evenly across data partitions and 
+-- (with Hash) collocating grows commonly fetched together. Generally, specify few columns, 
+-- and ones that have distinct, evenly distributed values.
+--
+-- Modify the example statement below. Edit the {} variables. Choose an option in [].
+--
+CREATE TABLE "JZL39003".transactionstatus ( fromAccount VARCHAR(32) ,toAccount VARCHAR(32) ,payeeName VARCHAR(60) ,mobileNumber VARCHAR(12) ,ifscCode VARCHAR(11) ,transactionType VARCHAR(32), fundTransferType VARCHAR(32)  ,transactionAmt FLOAT(53) ,transactionDate DATE , transactionStatus VARCHAR(32), TRANSACTIONID VARCHAR(32) )           ORGANIZE BY COLUMN
+           -- DISTRIBUTE BY HASH( { column-name }, ..., { column-name } )
+           -- PARTITION BY [RANGE] ( { column-name } [NULLS FIRST | NULLS LAST] )
+           --          ( PARTITION { partition-name } STARTING ( { starting-value } ) ENDING ( { ending-value } ), ..., PARTITION { partition-name } STARTING ( { starting-value } ) ENDING ( { ending-value } ) )
+           ;
+--
+-- Optional: The ALTER TABLE statement defines a primary key for the table
+-- Modify the example statement below
+--
+-- ALTER TABLE { table-name }
+--           ADD CONSTRAINT { constraint-name }
+--           PRIMARY KEY ( { column-name, ..., column-name } )
+--		      ;
+-- 
+-- Optional: Grant table privileges to others
+-- GRANT { CONTROL, INDEX, SELECT, UPDATE, INSERT, ALTER, DELETE, REFERENCES } 
+--          ON TABLE { table-schema }.{table-name} TO [public | user | role | group] ;

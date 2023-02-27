@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../.."
+		},
+		{
+			"path": "../../../../../../../../TransactionRightsSrv"
+		},
+		{
+			"path": "../../../../../../../../TransactionRightsSrvCBS"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "disabled"
+	}
+}

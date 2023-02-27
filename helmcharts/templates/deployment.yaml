@@ -1,0 +1,185 @@
+---
+# Source: bankingcommonsrv-chart/templates/deployment.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: bankingcommonsrv
+  name: bankingcommonsrv
+spec:
+  type: NodePort
+  ports:
+    - name: 3000-tcp
+      port: 9080
+      targetPort: 9080
+      protocol: TCP
+  selector:
+    app: bankingcommonsrv
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+
+    app: bankingcommonsrv
+  annotations:
+    prometheus.io/scrape: "true"
+  creationTimestamp: null
+  name: bankingcommonsrv-app-v2
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: bankingcommonsrv
+      version: v1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: bankingcommonsrv
+        version: v1
+     
+    spec:
+      containers:
+      - image: "{{ .Values.image.repository }}/bankingcommonsrv:{{ .Values.image.tag }}"
+        name: bankingcommonsrv-app-v2
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+          name: http
+          protocol: TCP
+        
+        env:            
+          - name: tmvauthtoken
+            valueFrom:
+              secretKeyRef:
+                name: bankingcommonsrv-tmv-secret
+                key: password   
+          - name: tmvurl
+            valueFrom:
+              secretKeyRef:
+                name: bankingcommonsrv-tmv-secret
+                key: username 
+          - name: otpurl
+            valueFrom:
+              secretKeyRef:
+                name: bankingcommonsrv-otp-secret
+                key: username  
+---
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: bankingcommonsrv-app-v2
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: bankingcommonsrv-app-v2
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 20
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: bankingcommonsrv
+  name: bankingcommonsrv
+spec:
+  port:
+    targetPort: 3000-tcp
+  to:
+    kind: Service
+    name: bankingcommonsrv
+    weight: 100  
+---
+
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: bankingcommonsrv-destination
+spec:
+  host: bankingcommonsrv
+
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+      trafficPolicy: # --- enable for adding circuit breaker into DestinationRule
+        loadBalancer:
+          simple: LEAST_CONN
+        connectionPool:
+          tcp:
+            maxConnections: 100
+          http:
+            http1MaxPendingRequests: 10
+            maxRequestsPerConnection: 10
+            maxRetries: 0
+        outlierDetection:
+          consecutive5xxErrors: 2
+          interval: 30s
+          baseEjectionTime: 10s
+          
+          maxEjectionPercent: 100
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: bankingcommonsrv-vs
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - userservice-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /bankingcommonsrv/
+    route:
+    - destination:
+        host: bankingcommonsrv
+        port:
+          number: 9080
+        subset: v1
+      weight: 100
+    retries:
+      attempts: 1
+      retryOn: gateway-error,connect-failure,refused-stream
+    timeout: 5s
+    # fault: # --- enable for inject fault into the route
+    #   delay:
+    #     percentage:
+    #       value: 33
+    #     fixedDelay: 3s
+
+---
+apiVersion: v1
+data:
+  password: {{ .Values.bankingcommonsrv_otp_secret.password }}
+  username: {{ .Values.bankingcommonsrv_otp_secret.username }}
+kind: Secret
+metadata:
+  name: bankingcommonsrv-otp-secret
+type: kubernetes.io/basic-auth
+---
+
+apiVersion: v1
+data:
+  password: {{ .Values.bankingcommonsrv_tmv_secret.password }}
+  username: {{ .Values.bankingcommonsrv_tmv_secret.username }}
+kind: Secret
+metadata:
+  name: bankingcommonsrv-tmv-secret
+type: kubernetes.io/basic-auth
+---
+
+
+
